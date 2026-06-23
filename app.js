@@ -1,44 +1,13 @@
 const wallets = [
-  {
-    chain: 'TRC',
-    token: 'TRX',
-    address: 'TYaSMBp1yj22VeX2CufWn63vTf5C2BKQND'
-  },
-  {
-    chain: 'TON',
-    token: 'TON',
-    address: 'EQDo1vubs16adUwpkstZN1vNXHnHY2_NeLZIUlwmRwiFvosO'
-  },
-  {
-    chain: 'TON',
-    token: 'USDT',
-    address: 'EQBKtAyErebY9U0aUFeZl1bX8ob4I7eItauQzBp6K1tRaly7'
-  },
-  {
-    chain: 'ERC',
-    token: 'USDT',
-    address: '0xe9DF5E1BFE0Ec36b3a6a2558b9e919753CeBE703'
-  },
-  {
-    chain: 'ERC',
-    token: 'USDC',
-    address: '0xe9DF5E1BFE0Ec36b3a6a2558b9e919753CeBE703'
-  },
-  {
-    chain: 'ETH',
-    token: 'ETH',
-    address: '0xBE209792E014c0fAD1EDf88C80C60C8cC864322B'
-  },
-  {
-    chain: 'BSC',
-    token: 'BNB',
-    address: '0xBE209792E014c0fAD1EDf88C80C60C8cC864322B'
-  },
-  {
-    chain: 'SOL',
-    token: 'SOL',
-    address: '3B3ZqLcRBDuheELrzUqVz8yRvoNA4Gi2Bokdf2u7izRN'
-  }
+  { chain: 'TRC', token: 'TRX', address: 'TYaSMBp1yj22VeX2CufWn63vTf5C2BKQND' },
+
+  { chain: 'TON', token: 'TON', address: 'EQDo1vubs16adUwpkstZN1vNXHnHY2_NeLZIUlwmRwiFvosO' },
+
+  { chain: 'ERC', token: 'USDT', address: '0xe9DF5E1BFE0Ec36b3a6a2558b9e919753CeBE703' },
+
+  { chain: 'ERC', token: 'USDC', address: '0xe9DF5E1BFE0Ec36b3a6a2558b9e919753CeBE703' },
+
+  { chain: 'ETH', token: 'ETH', address: '0xBE209792E014c0fAD1EDf88C80C60C8cC864322B' }
 ];
 
 async function getTRXBalance(address) {
@@ -49,7 +18,7 @@ async function getTRXBalance(address) {
   const data = await res.json();
 
   return (
-    Number(data.data?.[0]?.balance || 0) / 1000000
+    Number(data.data?.[0]?.balance || 0) / 1e6
   ).toFixed(6);
 }
 
@@ -61,7 +30,7 @@ async function getTONBalance(address) {
   const data = await res.json();
 
   return (
-    Number(data.result || 0) / 1000000000
+    Number(data.result || 0) / 1e9
   ).toFixed(6);
 }
 
@@ -74,6 +43,30 @@ async function getETHBalance(address) {
 
   return Number(
     data.ETH?.balance || 0
+  ).toFixed(6);
+}
+
+async function getERC20Balance(address, tokenAddress, decimals = 6) {
+
+  const res = await fetch(
+    `https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`
+  );
+
+  const data = await res.json();
+
+  const token = data.tokens?.find(
+    t =>
+      t.tokenInfo?.address?.toLowerCase() ===
+      tokenAddress.toLowerCase()
+  );
+
+  if (!token) {
+    return '0.000000';
+  }
+
+  return (
+    Number(token.balance) /
+    Math.pow(10, decimals)
   ).toFixed(6);
 }
 
@@ -117,6 +110,30 @@ async function loadBalances() {
         balance =
           await getETHBalance(
             w.address
+          );
+      }
+
+      else if (
+        w.chain === 'ERC' &&
+        w.token === 'USDT'
+      ) {
+        balance =
+          await getERC20Balance(
+            w.address,
+            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            6
+          );
+      }
+
+      else if (
+        w.chain === 'ERC' &&
+        w.token === 'USDC'
+      ) {
+        balance =
+          await getERC20Balance(
+            w.address,
+            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+            6
           );
       }
 
