@@ -1,3 +1,25 @@
+async function getTRXBalance(address) {
+
+  const url =
+    `https://api.trongrid.io/v1/accounts/${address}`;
+
+  const response = await fetch(url);
+
+  const data = await response.json();
+
+  if (
+    !data.data ||
+    data.data.length === 0
+  ) {
+    return 0;
+  }
+
+  return (
+    Number(data.data[0].balance || 0)
+    / 1000000
+  ).toFixed(6);
+}
+
 async function loadBalances() {
 
   const wallets = [
@@ -5,25 +27,22 @@ async function loadBalances() {
     {
       chain: 'TRC',
       token: 'TRX',
-      balance: 'Loading...'
+      address: 'TYaSMBp1yj22VeX2CufWn63vTf5C2BKQND'
     },
 
     {
       chain: 'TRC',
-      token: 'USDT',
-      balance: 'Loading...'
+      token: 'USDT'
     },
 
     {
       chain: 'TON',
-      token: 'TON',
-      balance: 'Loading...'
+      token: 'TON'
     },
 
     {
       chain: 'TON',
-      token: 'USDT',
-      balance: 'Loading...'
+      token: 'USDT'
     }
 
   ];
@@ -35,19 +54,35 @@ async function loadBalances() {
 
   tbody.innerHTML = '';
 
-  wallets.forEach(item => {
+  for (const item of wallets) {
 
-    const row = document.createElement('tr');
+    let balance = 'Loading...';
+
+    if (
+      item.chain === 'TRC' &&
+      item.token === 'TRX'
+    ) {
+      try {
+        balance =
+          await getTRXBalance(
+            item.address
+          );
+      } catch (e) {
+        balance = 'ERROR';
+      }
+    }
+
+    const row =
+      document.createElement('tr');
 
     row.innerHTML = `
       <td>${item.chain}</td>
       <td>${item.token}</td>
-      <td>${item.balance}</td>
+      <td>${balance}</td>
     `;
 
     tbody.appendChild(row);
-
-  });
+  }
 
 }
 
