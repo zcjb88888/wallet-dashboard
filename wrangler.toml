@@ -1,0 +1,6 @@
+name = "crypto-balance-checker"
+main = "index.js"
+compatibility_date = "2026-06-25"
+
+[compatibility_flags]
+node_compat = true
