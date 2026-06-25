@@ -1,11 +1,11 @@
 // ========================
-// 📦 引入第三方区块链库 (统一采用 ESM 语法，防止冲突)
+// 📦 引入第三方区块链库（Cloudflare 云端支持的 ESM 语法）
 // ========================
 import { TronWeb } from 'tronweb';
 import { ethers } from 'ethers';
 
 // ========================
-// 💰 钱包定义 (保持你的原始配置未动)
+// 💰 钱包定义（保持你的原始配置未动）
 // ========================
 const WALLETS = [
   { id: 'TRC', type: 'USDT', chain: 'TRC', address: 'TRmtrUrQzcxGqUCa6fq3K5JuUTDpE3BGtZ', range: 'F5', owner: 'TYaSMBp1yj22VeX2CufWn63vTf5C2BKQND' },
@@ -30,7 +30,7 @@ const bscProvider = new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org
 const SOL_RPC = 'https://api.mainnet-beta.solana.com';
 
 // ========================
-// 📡 链数据获取核心函数 (少改动，仅适配 fetch 异步请求)
+// 📡 链数据获取核心函数（统一使用云端 fetch 代替 axios）
 // ========================
 async function fetchTRC_USDT(addr, owner) { try { const contract = await tronWeb.contract().at('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'); const res = await contract.methods.balanceOf(addr).call({ from: owner }); return Number(res) / 1e6; } catch { return null; } }
 async function fetchTRX(addr) { try { return Number(await tronWeb.trx.getBalance(addr)) / 1e6; } catch { return null; } }
@@ -46,13 +46,12 @@ async function fetchSOL_USDC(acc) { try { const res = await fetch(SOL_RPC, { met
 const round6 = n => n == null ? null : Math.round(n * 1e6) / 1e6;
 
 // ========================
-// 🌍 Cloudflare Worker 标准入口
+// 🌍 Cloudflare Worker 云端响应入口
 // ========================
 export default {
   async fetch(request, env, ctx) {
     const results = [];
 
-    // 执行对账循环，仅获取链上余额
     for (const w of WALLETS) {
       let chainRaw = null;
       if (w.chain === 'TRC') {
@@ -75,10 +74,10 @@ export default {
       results.push({ id: `${w.chain}-${w.type}`, val: chainVal ?? 0 });
     }
 
-    // 生成一键复制文本（Tab隔开，方便直接贴入谷歌表格一行）
+    // 生成一键复制文本（Tab隔开，方便直接横向贴入谷歌表格一行）
     const copyText = results.map(r => r.val).join('\t');
 
-    // 生成前端 HTML
+    // 网页 HTML
     const html = `
     <!DOCTYPE html>
     <html>
@@ -93,9 +92,9 @@ export default {
         .balance-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 16px; }
         .balance-item span:first-child { font-weight: bold; color: #475569; }
         .balance-item span:last-child { font-family: "Courier New", monospace; color: #10b981; font-weight: bold; font-size: 18px; }
-        .btn { display: block; width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 25px; text-align: center; transition: background 0.2s; }
+        .btn { display: block; width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 25px; text-align: center; }
         .btn:hover { background: #2563eb; }
-        .tips { font-size: 13px; color: #94a3b8; text-align: center; margin-top: 12px; line-height: 1.5; }
+        .tips { font-size: 13px; color: #94a3b8; text-align: center; margin-top: 12px; }
       </style>
     </head>
     <body>
@@ -110,7 +109,7 @@ export default {
           `).join('')}
         </div>
         <button class="btn" onclick="copyToClipboard()">📋 一键复制链上余额</button>
-        <p class="tips">提示：点击复制后，直接在你的 Google 对账表格对应的【链上余额】第一个格子中按下 <b>Ctrl+V (或 Cmd+V)</b>，数据就会自动按顺序横向填入。附带复制内容：<br><small style="color:#64748b">${copyText}</small></p>
+        <p class="tips">提示：点击复制后，直接在谷歌表格对账栏中按下 <b>Ctrl+V</b> 粘贴即可。</p>
       </div>
 
       <script>
@@ -119,7 +118,7 @@ export default {
           navigator.clipboard.writeText(text).then(() => {
             alert('🎉 复制成功！快去谷歌表格中粘贴对账吧。');
           }).catch(err => {
-            alert('❌ 复制失败，请赋予浏览器剪贴板权限，或手动选择复制。');
+            alert('❌ 复制失败');
           });
         }
       </script>
